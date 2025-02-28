@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motor Control Interface</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="newStyles.css">
 </head>
 <body>
     <div class="ui container main-container">
-        <div class="ui grid">
+        <div class="ui two column grid">
             <!-- Configuration Panel -->
-            <div class="eight wide column">
+            <div class="column">
                 <div class="ui segment">
                     <h3 class="ui header">Configuration</h3>
                     <div class="ui form">
@@ -65,7 +65,7 @@
             </div>
 
             <!-- Calibration and Trajectory Control Panel -->
-            <div class="eight wide column">
+            <div class="column">
                 <div class="ui segment">
                     <h3 class="ui header">Calibration</h3>
                     <div class="ui form">
@@ -74,13 +74,28 @@
                             <label>Speed</label>
                             <div class="three fields">
                                 <div class="field">
-                                    <input type="number" placeholder="Ki">
+                                    <select class="ui dropdown" id="speed-ki">
+                                        <option value="">Ki</option>
+                                        <option value="ki1">- Ki 1</option>
+                                        <option value="ki2">- Ki 2</option>
+                                        <option value="ki3">- Ki 3</option>
+                                    </select>
                                 </div>
                                 <div class="field">
-                                    <input type="number" placeholder="Kp">
+                                    <select class="ui dropdown" id="speed-kp">
+                                        <option value="">Kp</option>
+                                        <option value="kp1">- Kp 1</option>
+                                        <option value="kp2">- Kp 2</option>
+                                        <option value="kp3">- Kp 3</option>
+                                    </select>
                                 </div>
                                 <div class="field">
-                                    <input type="number" placeholder="Kd">
+                                    <select class="ui dropdown" id="speed-kd">
+                                        <option value="">Kd</option>
+                                        <option value="kd1">- Kd 1</option>
+                                        <option value="kd2">- Kd 2</option>
+                                        <option value="kd3">- Kd 3</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -90,13 +105,28 @@
                             <label>Position</label>
                             <div class="three fields">
                                 <div class="field">
-                                    <input type="number" placeholder="Ki">
+                                    <select class="ui dropdown" id="position-ki">
+                                        <option value="">Ki</option>
+                                        <option value="ki1">- Ki 1</option>
+                                        <option value="ki2">- Ki 2</option>
+                                        <option value="ki3">- Ki 3</option>
+                                    </select>
                                 </div>
                                 <div class="field">
-                                    <input type="number" placeholder="Kp">
+                                    <select class="ui dropdown" id="position-kp">
+                                        <option value="">Kp</option>
+                                        <option value="kp1">- Kp 1</option>
+                                        <option value="kp2">- Kp 2</option>
+                                        <option value="kp3">- Kp 3</option>
+                                    </select>
                                 </div>
                                 <div class="field">
-                                    <input type="number" placeholder="Kd">
+                                    <select class="ui dropdown" id="position-kd">
+                                        <option value="">Kd</option>
+                                        <option value="kd1">- Kd 1</option>
+                                        <option value="kd2">- Kd 2</option>
+                                        <option value="kd3">- Kd 3</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -106,13 +136,28 @@
                             <label>Torque</label>
                             <div class="three fields">
                                 <div class="field">
-                                    <input type="number" placeholder="Ki">
+                                    <select class="ui dropdown" id="torque-ki">
+                                        <option value="">Ki</option>
+                                        <option value="ki1">- Ki 1</option>
+                                        <option value="ki2">- Ki 2</option>
+                                        <option value="ki3">- Ki 3</option>
+                                    </select>
                                 </div>
                                 <div class="field">
-                                    <input type="number" placeholder="Kp">
+                                    <select class="ui dropdown" id="torque-kp">
+                                        <option value="">Kp</option>
+                                        <option value="kp1">- Kp 1</option>
+                                        <option value="kp2">- Kp 2</option>
+                                        <option value="kp3">- Kp 3</option>
+                                    </select>
                                 </div>
                                 <div class="field">
-                                    <input type="number" placeholder="Kd">
+                                    <select class="ui dropdown" id="torque-kd">
+                                        <option value="">Kd</option>
+                                        <option value="kd1">- Kd 1</option>
+                                        <option value="kd2">- Kd 2</option>
+                                        <option value="kd3">- Kd 3</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -153,6 +198,6 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-    <script src="script.js"></script>
+    <script src="newSript.js"></script>
 </body>
 </html>

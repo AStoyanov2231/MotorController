@@ -15,19 +15,19 @@ $(document).ready(function() {
         // Collect PID values
         const pidValues = {
             speed: {
-                ki: $('.pid-group:eq(0) input:eq(0)').val(),
-                kp: $('.pid-group:eq(0) input:eq(1)').val(),
-                kd: $('.pid-group:eq(0) input:eq(2)').val(),
+                ki: $('#speed-ki').val(),
+                kp: $('#speed-kp').val(),
+                kd: $('#speed-kd').val(),
             },
             position: {
-                ki: $('.pid-group:eq(1) input:eq(0)').val(),
-                kp: $('.pid-group:eq(1) input:eq(1)').val(),
-                kd: $('.pid-group:eq(1) input:eq(2)').val(),
+                ki: $('#position-ki').val(),
+                kp: $('#position-kp').val(),
+                kd: $('#position-kd').val(),
             },
             torque: {
-                ki: $('.pid-group:eq(2) input:eq(0)').val(),
-                kp: $('.pid-group:eq(2) input:eq(1)').val(),
-                kd: $('.pid-group:eq(2) input:eq(2)').val(),
+                ki: $('#torque-ki').val(),
+                kp: $('#torque-kp').val(),
+                kd: $('#torque-kd').val(),
             }
         };
         console.log('Applying PID values:', pidValues);

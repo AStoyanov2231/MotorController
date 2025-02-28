@@ -1,0 +1,42 @@
+.main-container {
+    padding: 2rem;
+}
+
+.bottom-buttons {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.bottom-buttons button {
+    margin: 0 0.5rem !important;
+}
+
+.pid-group {
+    margin: 1.5rem 0;
+    padding: 0 0.5rem;
+}
+
+.ui.segment {
+    height: 100%;
+    min-width: fit-content;
+    padding: 1.5rem;
+}
+
+.ui.form .field {
+    margin-bottom: 1rem;
+}
+
+.ui.action.input {
+    width: 100%;
+}
+
+/* Add spacing between PID fields */
+.three.fields .field {
+    padding: 0 8px !important;
+}
+
+/* Ensure dropdowns don't overlap */
+.ui.dropdown {
+    width: 100% !important;
+    min-width: 100px !important;
+} 
