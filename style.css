@@ -30,12 +30,10 @@
     width: 100%;
 }
 
-/* Add spacing between PID fields */
 .three.fields .field {
     padding: 0 8px !important;
 }
 
-/* Ensure dropdowns don't overlap */
 .ui.dropdown {
     width: 100% !important;
     min-width: 100px !important;
