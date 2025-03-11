@@ -1,80 +1,190 @@
 $(document).ready(function() {
     $('.ui.dropdown').dropdown();
-
     const operationModeConfig = {
         'speed': {
             trajectorySpeed: false,
             trajectoryPosition: false,
-            trajectoryRamp: false,
-            showRampFields: false
+            trajectoryRamp: false
         },
         'position': {
             trajectorySpeed: false,
             trajectoryPosition: false,
-            trajectoryRamp: false,
-            showRampFields: false
+            trajectoryRamp: false
         },
         'manual-speed': {
             trajectorySpeed: true,
             trajectoryPosition: false,
-            trajectoryRamp: true,
-            showRampFields: true
+            trajectoryRamp: true
         },
         'manual-position': {
             trajectorySpeed: true,
             trajectoryPosition: true,
-            trajectoryRamp: true,
-            showRampFields: false
+            trajectoryRamp: false
         }
     };
 
-    function clearAllInputs() {
-        // Clear all number inputs
-        $('input[type="number"]').val('');
-        
-        // Reset dropdowns to their first option
-        $('.ui.dropdown').dropdown('restore defaults');
-        
-        // Trigger the operation mode change to update UI
-        const defaultMode = $('#operation-mode').val();
-        updateTrajectoryControls(defaultMode);
+    // Default JSON
+    const defaultConfig = {
+        FileHeader: {
+            Name: "JSON",
+            Version: 0.9,
+            DataSize: 0,
+            MD5: 0
+        },
+        FileBody: {
+            SysCfg: {
+                Type: ["uint32", "uint8", "uint32", "uint32", "uint32"],
+                Payload: {
+                    "DataCycleNs": 0,
+                    "FldWk.StrtVtgRt": 0,
+                    "FldWk.Ki": 0,
+                    "FldWk.Kp": 0,
+                    "FldWk.Kd": 0
+                }
+            },
+            MotorCfg: {
+                Type: ["uint8", "uint32", "uint16", "uint16", "bool"],
+                Payload: [
+                    {
+                        MotorPolePairs: 0,
+                        MaxPhaseCurrAmp: 0,
+                        MinSpeedRpm: 0,
+                        MaxSpeedRpm: 0,
+                        InvMotorDir: false
+                    }
+                ]
+            },
+            EncCfg: {
+                Type: ["char*", "uint16", "uint32", "bool"],
+                Payload: {
+                    EncLineDriver: "",
+                    EncNumOfPulses: 0,
+                    EncFactor: 0,
+                    InvEncDir: false
+                }
+            },
+            HalCfg: {
+                Type: ["uint32", "uint8", "uint8", "uint16", "uint16", "uint16", "uint32", "uint32", "uint32"],
+                Payload: {
+                    RqstVdVector: 0,
+                    SamplingSpeedRpm: 0,
+                    NumOfPolePairsRot: 0,
+                    MaxDeviationAngleDig: 0,
+                    WaitTimeBetweenEachSample: 0,
+                    WaitTimeAfterAlignment: 0,
+                    Ki: 0,
+                    Kp: 0,
+                    Kd: 0
+                }
+            },
+            AppCfg: {
+                Type: ["char*", "uint32", "uint32", "uint32", "uint32"],
+                Payload: {
+                    OpMode: "speed",
+                    DataCycleNs: 0,
+                    RampUpRt: 0,
+                    RampDwnRt: 0,
+                    QuickStopRt: 0
+                }
+            },
+            CalibrationParams: {
+                Type: ["uint32", "uint32", "uint32"],
+                Payload: [
+                    {
+                        Ki: 0,
+                        Kp: 0,
+                        Kd: 0
+                    },
+                    {
+                        Ki: 0,
+                        Kp: 0,
+                        Kd: 0
+                    },
+                    {
+                        Ki: 0,
+                        Kp: 0,
+                        Kd: 0
+                    }
+                ]
+            },
+            SpdStart: {
+                Type: ["uint32"],
+                Payload: {
+                    Rpm: 0
+                }
+            }
+        }
+    };
+
+    let currentConfig = JSON.parse(JSON.stringify(defaultConfig));
+    let configApplied = false;
+    let pidsApplied = false;
+
+    async function sendCommand(command, payload) {
+        try {
+            console.log(`Sending ${command} with payload:`, JSON.stringify(payload, null, 2));
+            const response = await fetch('http://127.0.0.1:3000/api/send-command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command, payload })
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
+            console.log(`Response for ${command}:`, JSON.stringify(result, null, 2));
+            return result;
+        } catch (error) {
+            console.error('Command failed:', error);
+            return null;
+        }
     }
 
-    function saveConfiguration() {
-        // Get the current configuration values
-        const configValues = getConfigValues();
-        
-        // Convert the configuration to a JSON string
-        const jsonString = JSON.stringify(configValues, null, 2);
-        
-        // Create a blob with the JSON data
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        
-        // Create a temporary link element
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'motor_configuration.json';
-        
-        // Append the link to the document, click it, and remove it
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up the URL object
-        URL.revokeObjectURL(link.href);
-        
-        // Log to console
-        console.log('Saved Configuration:', jsonString);
+    function updateConfig() {
+        const mode = $('#operation-mode').val();
+        const speed = parseFloat($('.field:contains("Speed"):not(:contains("Operation")) input[type="text"]').val()) || 0;
+        const position = parseFloat($('.field:contains("Position"):not(:contains("Operation")) input[type="text"]').val()) || 0;
+        const dataCycle = parseFloat($('.field:contains("Data Cycle Period") input').val()) || 0;
+        const quickStop = parseFloat($('.field:contains("Quick Stop Time") input').val()) || 0;
+        const rampUp = parseFloat($('.field:contains("Ramp Up Time") input').val()) || 0;
+        const rampDown = parseFloat($('.field:contains("Ramp Down Time") input').val()) || 0;
+        const rampPlato = parseFloat($('.field:contains("Ramp Plato Time") input').val()) || 0;
+
+        currentConfig.FileBody.AppCfg.Payload.OpMode = mode;
+        currentConfig.FileBody.SpdStart.Payload.Rpm = speed;
+        currentConfig.FileBody.AppCfg.Payload.Position = position;
+        currentConfig.FileBody.AppCfg.Payload.DataCycleNs = dataCycle;
+        currentConfig.FileBody.AppCfg.Payload.QuickStopRt = quickStop;
+        currentConfig.FileBody.AppCfg.Payload.RampUpRt = rampUp;
+        currentConfig.FileBody.AppCfg.Payload.RampDwnRt = rampDown;
+        currentConfig.FileBody.AppCfg.Payload.PlatoTime = rampPlato;
+
+        currentConfig.FileHeader.DataSize = JSON.stringify(currentConfig.FileBody).length;
+        configApplied = false;
+        pidsApplied = false;
     }
 
-    function updateTrajectoryControls(mode) {
-        const config = operationModeConfig[mode];
+    function resetConfig() {
+        currentConfig = JSON.parse(JSON.stringify(defaultConfig));
+        // First reset the inputs
+        $('input[type="number"], input[type="text"]').val('');
         
-        // Trajectory Control header
+        // Set dropdown to 'speed' first to ensure a valid mode
+        $('#operation-mode').dropdown('set selected', 'speed');
+        
+        // Then update visibility with the known valid mode
+        updateFieldVisibility('speed');
+        
+        configApplied = false;
+        pidsApplied = false;
+    }
+
+    function updateFieldVisibility(mode) {
+        // Default to 'speed' mode if undefined or invalid
+        const config = operationModeConfig[mode] || operationModeConfig['speed'];
+        
+        // Handle Trajectory Control section visibility
         const trajectoryHeader = $('h3.ui.header:contains("Trajectory Control")');
         const trajectoryForm = trajectoryHeader.next('.ui.form');
         
-        // Show/hide the entire trajectory section based on whether any trajectory controls are used
         if (config.trajectorySpeed || config.trajectoryPosition) {
             trajectoryHeader.show();
             trajectoryForm.show();
@@ -82,41 +192,37 @@ $(document).ready(function() {
             trajectoryHeader.hide();
             trajectoryForm.hide();
         }
-        
-        // Speed trajectory control
-        const speedField = $('.field:contains("Speed"):not(:contains("Operation"))');
-        const speedInput = speedField.find('input[type="number"]');
-        const speedButton = speedInput.next('button');
-        speedInput.prop('disabled', !config.trajectorySpeed);
-        speedButton.prop('disabled', !config.trajectorySpeed);
+
+        // Trajectory Speed field
+        const speedField = $('.field:contains("Speed"):not(:contains("Operation"))').closest('.field');
         if (config.trajectorySpeed) {
             speedField.show();
+            speedField.find('input').prop('disabled', false);
+            speedField.find('button').prop('disabled', false);
+            speedField.find('.ui.buttons button:contains("Set")').prop('disabled', false);
+            speedField.find('.ui.buttons button:contains("Stop")').prop('disabled', false);
         } else {
             speedField.hide();
-        }
-        
-        // Position trajectory control
-        const positionField = $('.field:contains("Position"):not(:contains("Operation"))');
-        const positionInput = positionField.find('input[type="number"]');
-        const positionButton = positionInput.next('button');
-        positionInput.prop('disabled', !config.trajectoryPosition);
-        positionButton.prop('disabled', !config.trajectoryPosition);
-        if (config.trajectoryPosition) {
-            positionField.show();
-        } else {
-            positionField.hide();
-        }
-        
-        // Ramp execution button
-        const rampButton = $('#execute-ramp');
-        rampButton.prop('disabled', !(config.trajectorySpeed || config.trajectoryPosition));
-        if (config.trajectorySpeed || config.trajectoryPosition) {
-            rampButton.parent().show();
-        } else {
-            rampButton.parent().hide();
+            speedField.find('input').prop('disabled', true);
+            speedField.find('.ui.buttons button:contains("Set")').prop('disabled', true);
+            speedField.find('.ui.buttons button:contains("Stop")').prop('disabled', true);
         }
 
-        // Ramp-related time fields
+        // Trajectory Position field
+        const positionField = $('.field:contains("Position"):not(:contains("Operation"))').closest('.field');
+        if (config.trajectoryPosition) {
+            positionField.show();
+            positionField.find('input').prop('disabled', false);
+            positionField.find('.ui.buttons button:contains("Set")').prop('disabled', false);
+            positionField.find('.ui.buttons button:contains("Stop")').prop('disabled', false);
+        } else {
+            positionField.hide();
+            positionField.find('input').prop('disabled', true);
+            positionField.find('.ui.buttons button:contains("Set")').prop('disabled', true);
+            positionField.find('.ui.buttons button:contains("Stop")').prop('disabled', true);
+        }
+
+        // Ramp fields
         const rampFields = [
             $('.field:contains("Ramp Up Time")'),
             $('.field:contains("Ramp Plato Time")'),
@@ -124,167 +230,142 @@ $(document).ready(function() {
         ];
 
         rampFields.forEach(field => {
-            field.find('input').prop('disabled', !config.showRampFields);
-            if (config.showRampFields) {
+            if (config.trajectoryRamp) {
                 field.show();
+                field.find('input').prop('disabled', false);
             } else {
                 field.hide();
+                field.find('input').prop('disabled', true);
             }
         });
-    }
 
-    function getConfigValues() {
-        const mode = $('#operation-mode').val();
-        const config = operationModeConfig[mode];
-        
-        // Create the complete JSON structure with default values
-        const result = {
-            "FileHeader": {
-                "Name": "JSON",
-                "Version": 0.9,
-                "DataSize": 0,
-                "MD5": 0
-            },
-            "FileBody": {
-                "SysCfg": {
-                    "Type": ["uint32", "uint8", "uint32", "uint32", "uint32"],
-                    "Payload": {
-                        "DataCycleNs": 0,
-                        "FldWk.StrtVtgRt": 0,
-                        "FldWk.Ki": 0,
-                        "FldWk.Kp": 0,
-                        "FldWk.Kd": 0
-                    }
-                },
-                "MotorCfg": {
-                    "Type": ["uint8", "uint32", "uint16", "uint16", "bool"],
-                    "Payload": [
-                        {
-                            "MotorPolePairs": 0,
-                            "MaxPhaseCurrAmp": 0,
-                            "MinSpeedRpm": 0,
-                            "MaxSpeedRpm": 0,
-                            "InvMotorDir": false
-                        }
-                    ]
-                },
-                "EncCfg": {
-                    "Type": ["char*", "uint16", "uint32", "bool"],
-                    "Payload": {
-                        "EncLineDriver": "",
-                        "EncNumOfPulses": 0,
-                        "EncFactor": 0,
-                        "InvEncDir": false
-                    }
-                },
-                "HalCfg": {
-                    "Type": ["uint32", "uint8", "uint8", "uint16", "uint16", "uint16", "uint32", "uint32", "uint32"],
-                    "Payload": {
-                        "RqstVdVector": 0,
-                        "SamplingSpeedRpm": 0,
-                        "NumOfPolePairsRot": 0,
-                        "MaxDeviationAngleDig": 0,
-                        "WaitTimeBetweenEachSample": 0,
-                        "WaitTimeAfterAlignment": 0,
-                        "Ki": 0,
-                        "Kp": 0,
-                        "Kd": 0
-                    }
-                },
-                "AppCfg": {
-                    "Type": ["char*", "uint32", "uint32", "uint32", "uint32"],
-                    "Payload": {
-                        "OpMode": mode,
-                        "DataCycleNs": 0,
-                        "RampUpRt": 0,
-                        "RampDwnRt": 0,
-                        "QuickStopRt": 0
-                    }
-                },
-                "CalibrationParams": {
-                    "Type": ["uint32", "uint32", "uint32"],
-                    "Payload": [
-                        {
-                            "Ki": 0,
-                            "Kp": 0,
-                            "Kd": 0
-                        },
-                        {
-                            "Ki": 0,
-                            "Kp": 0,
-                            "Kd": 0
-                        },
-                        {
-                            "Ki": 0,
-                            "Kp": 0,
-                            "Kd": 0
-                        }
-                    ]
-                },
-                "SpdStart": {
-                    "Type": ["uint32"],
-                    "Payload": {
-                        "Rpm": 0
-                    }
+        // Execute Ramp button
+        const rampButton = $('#execute-ramp');
+        if (config.trajectoryRamp) {
+            rampButton.show().prop('disabled', false);
+        } else {
+            rampButton.hide().prop('disabled', true);
+        }
+    }
+    
+    $('#apply-config').off('click').on('click', async function() {
+        const configJson = {
+            AppCfg: {
+                Type: ["char*", "uint32", "uint32", "uint32", "uint32"],
+                Payload: {
+                    OpMode: "Spd",
+                    DataCycleNs: 1000000,
+                    RampUpRt: 1000,
+                    RampDwnRt: 1000,
+                    QuickStopRt: 100
                 }
             }
         };
-
-        // Update values based on the current mode and available fields
-        if (config.trajectorySpeed) {
-            const speedValue = parseFloat($('.field:contains("Speed"):not(:contains("Operation")) input[type="number"]').val()) || 0;
-            result.FileBody.SpdStart.Payload.Rpm = speedValue;
-
-            // Only set DataCycleNs and QuickStopRt when speed control is active
-            const dataCycleValue = parseFloat($('.field:contains("DataCycleNs") input').val()) || 0;
-            const quickStopValue = parseFloat($('.field:contains("QuickStopRt") input').val()) || 0;
-            result.FileBody.AppCfg.Payload.DataCycleNs = dataCycleValue || 0;
-            result.FileBody.AppCfg.Payload.QuickStopRt = quickStopValue || 0;
-        }
-
-        // Add position configuration if available
-        if (config.trajectoryPosition) {
-            const positionValue = parseFloat($('.field:contains("Position"):not(:contains("Operation")) input[type="number"]').val()) || 0;
-            // Since position wasn't in the original structure, we'll add it to AppCfg
-            result.FileBody.AppCfg.Payload.Position = positionValue;
-        }
-
-        // Update ramp configuration if available
-        if (config.showRampFields) {
-            result.FileBody.AppCfg.Payload.RampUpRt = parseFloat($('.field:contains("Ramp Up Time") input').val()) || 0;
-            result.FileBody.AppCfg.Payload.RampDwnRt = parseFloat($('.field:contains("Ramp Down Time") input').val()) || 0;
-            
-            // Store plato time in AppCfg
-            const platoTime = parseFloat($('.field:contains("Ramp Plato Time") input').val()) || 0;
-            result.FileBody.AppCfg.Payload.PlatoTime = platoTime;
-        }
-
-        // Calculate DataSize based on the complete FileBody
-        result.FileHeader.DataSize = JSON.stringify(result.FileBody).length;
-
-        return result;
-    }
-
-    // Add click handler for apply config button
-    $('#apply-config').on('click', function() {
-        const configValues = getConfigValues();
-        console.log('Current Configuration:', JSON.stringify(configValues, null, 2));
+        await sendCommand('applyCfg', configJson);
+        configApplied = true;
     });
 
-    // Add click handler for restore to default button
-    $('#restore-default').on('click', function() {
-        clearAllInputs();
-        const configValues = getConfigValues();
-        console.log('Restored Default Configuration:', JSON.stringify(configValues, null, 2));
+    $('#apply-pids').off('click').on('click', async function() {
+        updateConfig();
+        await sendCommand('applyCfg', { pids: currentConfig.FileBody.CalibrationParams });
+        pidsApplied = true;
     });
 
-    // Add click handler for save all button
-    $('#save-all').on('click', saveConfiguration);
+    $('#save-all').off('click').on('click', async function() {
+        updateConfig();
+        if (!configApplied) {
+            await sendCommand('applyCfg', { configuration: currentConfig.FileBody });
+        }
+        
+        const jsonString = JSON.stringify(currentConfig, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'motor_configuration.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    });
 
-    $('#operation-mode').on('change', function() {
+    $('#restore-default').off('click').on('click', function() {
+        resetConfig();
+    });
+
+    // Update Speed Set and Stop button handlers
+    $('.field:contains("Speed") button:contains("Set")').off('click').on('click', function() {
+        const speed = parseFloat($(this).closest('.field').find('input[type="text"]').val());
+        if (!isNaN(speed)) {
+            const spdJson = {
+                SpdStart: {
+                    Type: ["uint32"],
+                    Payload: {
+                        Val: speed
+                    }
+                }
+            };
+            sendCommand('cmd', spdJson);
+        }
+    });
+
+    $('.field:contains("Speed") button:contains("Stop")').off('click').on('click', function() {
+        const stopJson = {
+            SpdStop: {
+                Type: ["uint32"],
+                Payload: {}
+            }
+        };
+        sendCommand('cmd', stopJson);
+    });
+
+    // Update Position Set and Stop button handlers
+    $('.field:contains("Position") button:contains("Set")').off('click').on('click', function() {
+        const position = parseFloat($(this).closest('.field').find('input[type="text"]').val());
+        if (!isNaN(position)) {
+            const posJson = {
+                PosStart: {
+                    Type: ["uint32"],
+                    Payload: {
+                        Val: position
+                    }
+                }
+            };
+            sendCommand('cmd', posJson);
+        }
+    });
+
+    $('.field:contains("Position") button:contains("Stop")').off('click').on('click', function() {
+        const stopJson = {
+            PosStop: {
+                Type: ["uint32"],
+                Payload: {}
+            }
+        };
+        sendCommand('cmd', stopJson);
+    });
+
+    $('#execute-ramp').off('click').on('click', function() {
+        const rampJson = {
+            RampStart: {
+                Type: ["uint32"],
+                Payload: {
+                    Time: 1000
+                }
+            }
+        };
+        sendCommand('cmd', rampJson);
+    });
+
+    $('#operation-mode').off('change').on('change', function() {
         const selectedMode = $(this).val();
-        updateTrajectoryControls(selectedMode);
+        currentConfig.FileBody.AppCfg.Payload.OpMode = selectedMode;
+        updateFieldVisibility(selectedMode);
+        configApplied = false;
     });
 
-    updateTrajectoryControls($('#operation-mode').val());
+    // Initial visibility update
+    updateFieldVisibility($('#operation-mode').val());
+
+    // Make currentConfig globally accessible
+    window.currentConfig = currentConfig;
 });
