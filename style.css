@@ -1,19 +1,5 @@
 .main-container {
-    padding: 2rem;
-}
-
-.bottom-buttons {
-    margin-top: 2rem;
-    text-align: center;
-}
-
-.bottom-buttons button {
-    margin: 0 0.5rem !important;
-}
-
-.pid-group {
-    margin: 1.5rem 0;
-    padding: 0 0.5rem;
+    padding: 5rem;
 }
 
 .ui.segment {
@@ -23,18 +9,40 @@
 }
 
 .ui.form .field {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.ui.action.input {
-    width: 100%;
+.ui.dropdown, .ui.action.input {
+    width: 100% !important;
+}
+
+.ui.dropdown {
+    min-width: 100px !important;
 }
 
 .three.fields .field {
     padding: 0 8px !important;
 }
 
-.ui.dropdown {
-    width: 100% !important;
-    min-width: 100px !important;
+.pid-group {
+    margin: 1.5rem 0;
+}
+
+.bottom-buttons {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.bottom-buttons button {
+    width: auto;
+}
+
+.bottom-buttons button:first-child {
+    justify-self: end;
+}
+
+.bottom-buttons button:last-child {
+    justify-self: start;
 } 
