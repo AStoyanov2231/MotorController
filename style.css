@@ -54,7 +54,7 @@
 }
 
 .ui.buttons .button {
-    margin-right: 5.5rem !important;
+    margin-right: 0.5rem !important;
     border-radius: 0.28571429rem !important;
 }
 
@@ -95,4 +95,23 @@
     .pid-group {
         margin: 0.5rem 0;
     }
+}
+
+.trajectory-control .field {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.trajectory-control label {
+    width: 80px;
+}
+
+.trajectory-control input[type="number"] {
+    width: 120px;
+    margin-right: 10px;
+}
+
+.trajectory-control .ui.buttons {
+    margin-left: auto;
 }

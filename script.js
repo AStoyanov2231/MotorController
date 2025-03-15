@@ -125,7 +125,7 @@ $(document).ready(function() {
             const response = await fetch('http://127.0.0.1:3000/api/send-command', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command, payload })
+                body: JSON.stringify(payload)
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const result = await response.json();
@@ -139,13 +139,13 @@ $(document).ready(function() {
 
     function updateConfig() {
         const mode = $('#operation-mode').val();
-        const speed = parseFloat($('.field:contains("Speed"):not(:contains("Operation")) input[type="text"]').val()) || 0;
-        const position = parseFloat($('.field:contains("Position"):not(:contains("Operation")) input[type="text"]').val()) || 0;
-        const dataCycle = parseFloat($('.field:contains("Data Cycle Period") input').val()) || 0;
-        const quickStop = parseFloat($('.field:contains("Quick Stop Time") input').val()) || 0;
-        const rampUp = parseFloat($('.field:contains("Ramp Up Time") input').val()) || 0;
-        const rampDown = parseFloat($('.field:contains("Ramp Down Time") input').val()) || 0;
-        const rampPlato = parseFloat($('.field:contains("Ramp Plato Time") input').val()) || 0;
+        const speed = parseFloat($('.field:contains("Speed"):not(:contains("Operation")) input[type="number"]').val()) || 0;
+        const position = parseFloat($('.field:contains("Position"):not(:contains("Operation")) input[type="number"]').val()) || 0;
+        const dataCycle = parseFloat($('.field:contains("Data Cycle Period") input[type="number"]').val()) || 0;
+        const quickStop = parseFloat($('.field:contains("Quick Stop Time") input[type="number"]').val()) || 0;
+        const rampUp = parseFloat($('.field:contains("Ramp Up Time") input[type="number"]').val()) || 0;
+        const rampDown = parseFloat($('.field:contains("Ramp Down Time") input[type="number"]').val()) || 0;
+        const rampPlato = parseFloat($('.field:contains("Ramp Plato Time") input[type="number"]').val()) || 0;
 
         currentConfig.FileBody.AppCfg.Payload.OpMode = mode;
         currentConfig.FileBody.SpdStart.Payload.Rpm = speed;
@@ -156,6 +156,25 @@ $(document).ready(function() {
         currentConfig.FileBody.AppCfg.Payload.RampDwnRt = rampDown;
         currentConfig.FileBody.AppCfg.Payload.PlatoTime = rampPlato;
 
+        // Add PID values update from input fields
+        currentConfig.FileBody.CalibrationParams.Payload[0] = {
+            Ki: parseFloat($('.speed-pid[data-pid="Ki"]').val()) || 100,
+            Kp: parseFloat($('.speed-pid[data-pid="Kp"]').val()) || 100,
+            Kd: parseFloat($('.speed-pid[data-pid="Kd"]').val()) || 100
+        };
+
+        currentConfig.FileBody.CalibrationParams.Payload[1] = {
+            Ki: parseFloat($('.position-pid[data-pid="Ki"]').val()) || 100,
+            Kp: parseFloat($('.position-pid[data-pid="Kp"]').val()) || 100,
+            Kd: parseFloat($('.position-pid[data-pid="Kd"]').val()) || 100
+        };
+
+        currentConfig.FileBody.CalibrationParams.Payload[2] = {
+            Ki: parseFloat($('.torque-pid[data-pid="Ki"]').val()) || 100,
+            Kp: parseFloat($('.torque-pid[data-pid="Kp"]').val()) || 100,
+            Kd: parseFloat($('.torque-pid[data-pid="Kd"]').val()) || 100
+        };
+
         currentConfig.FileHeader.DataSize = JSON.stringify(currentConfig.FileBody).length;
         configApplied = false;
         pidsApplied = false;
@@ -164,9 +183,8 @@ $(document).ready(function() {
     function resetConfig() {
         currentConfig = JSON.parse(JSON.stringify(defaultConfig));
         $('input[type="number"], input[type="text"]').val('');
-        
         $('#operation-mode').dropdown('set selected', 'speed');
-        
+
         updateFieldVisibility('speed');
         
         configApplied = false;
@@ -176,6 +194,7 @@ $(document).ready(function() {
     function updateFieldVisibility(mode) {
         const config = operationModeConfig[mode] || operationModeConfig['speed'];
         
+        // Handle Trajectory Control section visibility
         const trajectoryHeader = $('h3.ui.header:contains("Trajectory Control")');
         const trajectoryForm = trajectoryHeader.next('.ui.form');
         
@@ -214,6 +233,17 @@ $(document).ready(function() {
             positionField.find('.ui.buttons button:contains("Stop")').prop('disabled', true);
         }
 
+        const rampTimeField = $('.field:contains("Ramp Time")').closest('.field');
+        if (config.trajectoryRamp) {
+            rampTimeField.show();
+            rampTimeField.find('input').prop('disabled', false);
+            rampTimeField.find('#execute-ramp').prop('disabled', false);
+        } else {
+            rampTimeField.hide();
+            rampTimeField.find('input').prop('disabled', true);
+            rampTimeField.find('#execute-ramp').prop('disabled', true);
+        }
+
         const rampFields = [
             $('.field:contains("Ramp Up Time")'),
             $('.field:contains("Ramp Plato Time")'),
@@ -230,6 +260,7 @@ $(document).ready(function() {
             }
         });
 
+        // Execute Ramp button
         const rampButton = $('#execute-ramp');
         if (config.trajectoryRamp) {
             rampButton.show().prop('disabled', false);
@@ -239,15 +270,16 @@ $(document).ready(function() {
     }
     
     $('#apply-config').off('click').on('click', async function() {
+        updateConfig();
         const configJson = {
             AppCfg: {
                 Type: ["char*", "uint32", "uint32", "uint32", "uint32"],
                 Payload: {
-                    OpMode: "Spd",
-                    DataCycleNs: 1000000,
-                    RampUpRt: 1000,
-                    RampDwnRt: 1000,
-                    QuickStopRt: 100
+                    OpMode: currentConfig.FileBody.AppCfg.Payload.OpMode,
+                    DataCycleNs: currentConfig.FileBody.AppCfg.Payload.DataCycleNs,
+                    RampUpRt: currentConfig.FileBody.AppCfg.Payload.RampUpRt,
+                    RampDwnRt: currentConfig.FileBody.AppCfg.Payload.RampDwnRt,
+                    QuickStopRt: currentConfig.FileBody.AppCfg.Payload.QuickStopRt
                 }
             }
         };
@@ -257,7 +289,29 @@ $(document).ready(function() {
 
     $('#apply-pids').off('click').on('click', async function() {
         updateConfig();
-        await sendCommand('applyCfg', { pids: currentConfig.FileBody.CalibrationParams });
+        const pidsJson = {
+            PidPrms: {
+                Type: ["float", "float", "float"],
+                Payload: [
+                    {
+                        Ki: parseFloat($('.speed-pid[data-pid="Ki"]').val()) || 100,
+                        Kp: parseFloat($('.speed-pid[data-pid="Kp"]').val()) || 100,
+                        Kd: parseFloat($('.speed-pid[data-pid="Kd"]').val()) || 100
+                    },
+                    {
+                        Ki: parseFloat($('.position-pid[data-pid="Ki"]').val()) || 100,
+                        Kp: parseFloat($('.position-pid[data-pid="Kp"]').val()) || 100,
+                        Kd: parseFloat($('.position-pid[data-pid="Kd"]').val()) || 100
+                    },
+                    {
+                        Ki: parseFloat($('.torque-pid[data-pid="Ki"]').val()) || 100,
+                        Kp: parseFloat($('.torque-pid[data-pid="Kp"]').val()) || 100,
+                        Kd: parseFloat($('.torque-pid[data-pid="Kd"]').val()) || 100
+                    }
+                ]
+            }
+        };
+        await sendCommand('applyCfg', pidsJson);
         pidsApplied = true;
     });
 
@@ -282,9 +336,8 @@ $(document).ready(function() {
         resetConfig();
     });
 
-    // Update Speed Set and Stop button handlers
     $('.field:contains("Speed") button:contains("Set")').off('click').on('click', function() {
-        const speed = parseFloat($(this).closest('.field').find('input[type="text"]').val());
+        const speed = parseFloat($(this).closest('.field').find('input[type="number"]').val());
         if (!isNaN(speed)) {
             const spdJson = {
                 SpdStart: {
@@ -294,23 +347,16 @@ $(document).ready(function() {
                     }
                 }
             };
-            sendCommand('cmd', spdJson);
+            sendCommand('Spd', spdJson);
         }
     });
 
     $('.field:contains("Speed") button:contains("Stop")').off('click').on('click', function() {
-        const stopJson = {
-            SpdStop: {
-                Type: ["uint32"],
-                Payload: {}
-            }
-        };
-        sendCommand('cmd', stopJson);
+        sendCommand('StopSpd', null);
     });
-
-    // Update Position Set and Stop button handlers
+    
     $('.field:contains("Position") button:contains("Set")').off('click').on('click', function() {
-        const position = parseFloat($(this).closest('.field').find('input[type="text"]').val());
+        const position = parseFloat($(this).closest('.field').find('input[type="number"]').val());
         if (!isNaN(position)) {
             const posJson = {
                 PosStart: {
@@ -320,26 +366,21 @@ $(document).ready(function() {
                     }
                 }
             };
-            sendCommand('cmd', posJson);
+            sendCommand('Pos', posJson);
         }
     });
 
     $('.field:contains("Position") button:contains("Stop")').off('click').on('click', function() {
-        const stopJson = {
-            PosStop: {
-                Type: ["uint32"],
-                Payload: {}
-            }
-        };
-        sendCommand('cmd', stopJson);
+        sendCommand('StopPos', null);
     });
 
     $('#execute-ramp').off('click').on('click', function() {
+        updateConfig();
         const rampJson = {
             RampStart: {
                 Type: ["uint32"],
                 Payload: {
-                    Time: 1000
+                    Time: currentConfig.FileBody.AppCfg.Payload.PlatoTime || 0
                 }
             }
         };
@@ -353,7 +394,9 @@ $(document).ready(function() {
         configApplied = false;
     });
 
+    // Initial visibility update
     updateFieldVisibility($('#operation-mode').val());
 
+    // Make currentConfig globally accessible
     window.currentConfig = currentConfig;
 });
