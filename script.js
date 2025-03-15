@@ -23,7 +23,6 @@ $(document).ready(function() {
         }
     };
 
-    // Default JSON
     const defaultConfig = {
         FileHeader: {
             Name: "JSON",
@@ -164,13 +163,10 @@ $(document).ready(function() {
 
     function resetConfig() {
         currentConfig = JSON.parse(JSON.stringify(defaultConfig));
-        // First reset the inputs
         $('input[type="number"], input[type="text"]').val('');
         
-        // Set dropdown to 'speed' first to ensure a valid mode
         $('#operation-mode').dropdown('set selected', 'speed');
         
-        // Then update visibility with the known valid mode
         updateFieldVisibility('speed');
         
         configApplied = false;
@@ -178,10 +174,8 @@ $(document).ready(function() {
     }
 
     function updateFieldVisibility(mode) {
-        // Default to 'speed' mode if undefined or invalid
         const config = operationModeConfig[mode] || operationModeConfig['speed'];
         
-        // Handle Trajectory Control section visibility
         const trajectoryHeader = $('h3.ui.header:contains("Trajectory Control")');
         const trajectoryForm = trajectoryHeader.next('.ui.form');
         
@@ -193,7 +187,6 @@ $(document).ready(function() {
             trajectoryForm.hide();
         }
 
-        // Trajectory Speed field
         const speedField = $('.field:contains("Speed"):not(:contains("Operation"))').closest('.field');
         if (config.trajectorySpeed) {
             speedField.show();
@@ -208,7 +201,6 @@ $(document).ready(function() {
             speedField.find('.ui.buttons button:contains("Stop")').prop('disabled', true);
         }
 
-        // Trajectory Position field
         const positionField = $('.field:contains("Position"):not(:contains("Operation"))').closest('.field');
         if (config.trajectoryPosition) {
             positionField.show();
@@ -222,7 +214,6 @@ $(document).ready(function() {
             positionField.find('.ui.buttons button:contains("Stop")').prop('disabled', true);
         }
 
-        // Ramp fields
         const rampFields = [
             $('.field:contains("Ramp Up Time")'),
             $('.field:contains("Ramp Plato Time")'),
@@ -239,7 +230,6 @@ $(document).ready(function() {
             }
         });
 
-        // Execute Ramp button
         const rampButton = $('#execute-ramp');
         if (config.trajectoryRamp) {
             rampButton.show().prop('disabled', false);
@@ -363,9 +353,7 @@ $(document).ready(function() {
         configApplied = false;
     });
 
-    // Initial visibility update
     updateFieldVisibility($('#operation-mode').val());
 
-    // Make currentConfig globally accessible
     window.currentConfig = currentConfig;
 });
