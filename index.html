@@ -1,159 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motor Control Interface</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="ui container main-container">
-        <div class="ui two column grid">
-            <div class="column">
-                <div class="ui segment">
-                    <h3 class="ui header">Calibration</h3>
-                    <div class="ui form">
-                        <div class="field">
-                            <label>Motor</label>
-                            <select class="ui dropdown" id="motor-select">
-                                <option value="maxon">Maxon</option>
-                                <option value="embpapst">Embpapst</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Motor Control Interface</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+         <link rel="stylesheet" href="styles.css">
+    </head>
 
-                        <div class="field">
-                            <label>Operation Mode</label>
-                            <select class="ui dropdown" id="operation-mode">
-                                <option value="speed">Speed</option>
-                                <option value="position">Position</option>
-                                <option value="manual-speed">Manual Speed</option>
-                                <option value="manual-position">Manual Position</option>
-                            </select>
-                        </div>
+    <body>
+        <div class="ui grid">
+            <div class="eight wide column">
+                <div class="ui container main-container">
+                    <div class="ui segment">
+                        <h3 class="ui header">Calibration</h3>
+                        <div class="dropdown-container">
+                            <div class="ui selection dropdown" id="motor-select">
+                                <input type="hidden" name="motor">
+                                <i class="dropdown icon"></i>
+                                <div class="default text">Select Motor</div>
+                                <div class="menu">
+                                    <div class="item" data-value="maxon">Maxon</div>
+                                    <div class="item" data-value="ebmpapst">Ebmpapst</div>
+                                    <div class="item" data-value="custom">Custom</div>
+                                </div>
+                            </div>
 
-                        <div class="field">
-                            <label>Data Cycle Period</label>
-                            <input type="number" step="any" placeholder="[0 - 1.e(-9)]">
+                            <div class="ui selection dropdown" id="operation-mode-select">
+                                <input type="hidden" name="operation-mode">
+                                <i class="dropdown icon"></i>
+                                <div class="default text">Select Operation Mode</div>
+                                <div class="menu">
+                                    <div class="item" data-value="speed">Speed</div>
+                                    <div class="item" data-value="manual-speed">Manual Speed</div>
+                                    <div class="item" data-value="position">Position</div>
+                                    <div class="item" data-value="manual-position">Manual Position</div>
+                                </div>
+                            </div>
                         </div>
-
-                        <div class="field">
-                            <label>Ramp Up Time</label>
-                            <input type="number" step="any">
+    
+                        <div class="ui right labeled input">
+                            <input type="number" id="data-cycle-period" placeholder="[0 - 1.e(-9)]">
+                            <div class="ui basic label">Data Cycle Period</div>
                         </div>
-
-                        <div class="field">
-                            <label>Ramp Down Time</label>
-                            <input type="number" step="any">
+    
+                        <div class="ui right labeled input">
+                            <input type="number" id="ramp-up-rate">
+                            <div class="ui basic label">Ramp Up Rate</div>
                         </div>
-
-                        <div class="field">
-                            <label>Quick Stop Time</label>
-                            <input type="number" step="any">
+    
+                        <div class="ui right labeled input">
+                            <input type="number" id="ramp-down-rate">
+                            <div class="ui basic label">Ramp Down Rate</div>
                         </div>
-
+    
+                        <div class="ui right labeled input">
+                            <input type="number" id="quick-stop-rate">
+                            <div class="ui basic label">Quick Stop Rate</div>
+                        </div>
+    
                         <button class="ui primary button" id="apply-config">Apply Config</button>
                     </div>
                 </div>
             </div>
-            <div class="column">
-                <div class="ui segment">
-                    <h3 class="ui header">Trajectory Control</h3>
-                    <div class="ui form">
-                        <div class="field">
-                            <label>Speed</label>
-                            <input type="number">
-                            <div class="ui buttons">
-                                <button class="ui positive button">Set</button>
-                                <button class="ui negative button">Stop</button>
+            <div class="eight wide column">
+                <div class="ui container motor-status">
+                    <div class="ui segment">
+                        <h3 class="ui header">Trajectory Control</h3>
+                        <div class="trajectory-container">
+                            <div class="trajectory-input-group">
+                                <div class="ui right labeled input">
+                                    <input type="number">
+                                    <div class="ui basic label">Speed</div>
+                                </div>
+                                <div class="button-group">
+                                    <button class="ui primary button">Set</button>
+                                    <button class="ui button">Stop</button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="field">
-                            <label>Position</label>
-                            <input type="number">
-                            <div class="ui buttons">
-                                <button class="ui positive button">Set</button>
-                                <button class="ui negative button">Stop</button>
+
+                            <div class="trajectory-input-group">
+                                <div class="ui right labeled input">
+                                    <input type="number">
+                                    <div class="ui basic label">Position</div>
+                                </div>
+                                <div class="button-group">
+                                    <button class="ui primary button">Set</button>
+                                    <button class="ui button">Stop</button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="field">
-                            <label>Ramp Time</label>
-                            <input type="number">
-                            <button class="ui primary button" id="execute-ramp">Execute Ramp</button>
+
+                            <div class="trajectory-input-group">
+                                <div class="ui right labeled input">
+                                    <input type="number">
+                                    <div class="ui basic label">Ramp Rate</div>
+                                </div>
+                                <div class="button-group">
+                                    <button class="ui primary button">Execute Ramp</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <h3 class="ui header">PIDs</h3>
-                    <div class="ui form">
-                        <div class="ui three column grid">
-                            <div class="column">
-                                <div class="pid-group">
-                                    <label>Speed</label>
-                                    <div class="field">
-                                        <label>Ki</label>
-                                        <input type="number" class="speed-pid" data-pid="Ki" placeholder="Ki value">
+                </div>
+                <div class="ui container pids">
+                    <div class="ui segment">
+                        <h3 class="ui header">PIDs</h3>
+                        <div class="ui form">
+                            <div class="ui three column grid">
+                                <div class="column">
+                                    <div class="pid-group">
+                                        <label>Speed</label>
+                                        <div class="field">
+                                            <label>Ki</label>
+                                            <input type="number" class="speed-pid" data-pid="Ki">
+                                        </div>
+                                        <div class="field">
+                                            <label>Kp</label>
+                                            <input type="number" class="speed-pid" data-pid="Kp">
+                                        </div>
+                                        <div class="field">
+                                            <label>Kd</label>
+                                            <input type="number" class="speed-pid" data-pid="Kd">
+                                        </div>
                                     </div>
-                                    <div class="field">
-                                        <label>Kp</label>
-                                        <input type="number" class="speed-pid" data-pid="Kp" placeholder="Kp value">
+                                </div>
+                                <div class="column">
+                                    <div class="pid-group">
+                                        <label>Position</label>
+                                        <div class="field">
+                                            <label>Ki</label>
+                                            <input type="number" class="position-pid" data-pid="Ki">
+                                        </div>
+                                        <div class="field">
+                                            <label>Kp</label>
+                                            <input type="number" class="position-pid" data-pid="Kp">
+                                        </div>
+                                        <div class="field">
+                                            <label>Kd</label>
+                                            <input type="number" class="position-pid" data-pid="Kd">
+                                        </div>
                                     </div>
-                                    <div class="field">
-                                        <label>Kd</label>
-                                        <input type="number" class="speed-pid" data-pid="Kd" placeholder="Kd value">
+                                </div>
+                                <div class="column">
+                                    <div class="pid-group">
+                                        <label>Torque</label>
+                                        <div class="field">
+                                            <label>Ki</label>
+                                            <input type="number" class="torque-pid" data-pid="Ki">
+                                        </div>
+                                        <div class="field">
+                                            <label>Kp</label>
+                                            <input type="number" class="torque-pid" data-pid="Kp">
+                                        </div>
+                                        <div class="field">
+                                            <label>Kd</label>
+                                            <input type="number" class="torque-pid" data-pid="Kd">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="column">
-                                <div class="pid-group">
-                                    <label>Position</label>
-                                    <div class="field">
-                                        <label>Ki</label>
-                                        <input type="number" class="position-pid" data-pid="Ki" placeholder="Ki value">
-                                    </div>
-                                    <div class="field">
-                                        <label>Kp</label>
-                                        <input type="number" class="position-pid" data-pid="Kp" placeholder="Kp value">
-                                    </div>
-                                    <div class="field">
-                                        <label>Kd</label>
-                                        <input type="number" class="position-pid" data-pid="Kd" placeholder="Kd value">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="column">
-                                <div class="pid-group">
-                                    <label>Torque</label>
-                                    <div class="field">
-                                        <label>Ki</label>
-                                        <input type="number" class="torque-pid" data-pid="Ki" placeholder="Ki value">
-                                    </div>
-                                    <div class="field">
-                                        <label>Kp</label>
-                                        <input type="number" class="torque-pid" data-pid="Kp" placeholder="Kp value">
-                                    </div>
-                                    <div class="field">
-                                        <label>Kd</label>
-                                        <input type="number" class="torque-pid" data-pid="Kd" placeholder="Kd value">
-                                    </div>
-                                </div>
-                            </div>
+                            <button class="ui primary button" id="apply-pids">Apply PIDs</button>
                         </div>
-                        <button class="ui primary button" id="apply-pids">Apply PIDs</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="bottom-buttons">
+        
+        <div class="global-actions">
             <button class="ui button" id="restore-default">Restore Default</button>
             <button class="ui primary button" id="save-all">Save All</button>
         </div>
-    </div>
+    </body>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-    <script src="script.js"></script>
-</body>
+    <script src="motorConfig.js"></script>
+    <script type="module" src="script.js"></script>
 </html>
