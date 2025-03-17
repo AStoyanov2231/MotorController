@@ -1,4 +1,4 @@
-// Motor configuration JSON strings
+//JSON strings
 const ebmpapstConfig = `{
     "FileHeader": {
       "Name": "JSON",
@@ -190,30 +190,25 @@ class MotorConfigManager {
     }
 
     getMotorConfig(motorType) {
+      console.log(motorType);
         const config = this.configs[motorType.toLowerCase()];
-        console.log(`Getting config for motor type: ${motorType}`, config ? 'Found' : 'Not found');
+        // console.log(`Getting config for motor type: ${motorType}`, config ? 'Found' : 'Not found');
         return config;
     }
 
     extractConfigData(motorType) {
-        console.log(`Extracting config data for motor type: ${motorType}`);
+        // console.log(`Extracting config data for motor type: ${motorType}`);
         const config = this.getMotorConfig(motorType);
         if (!config) {
-            console.log('No config found for motor type:', motorType);
+            // console.log('No config found for motor type:', motorType);
             return null;
         }
 
         const extractedData = {
-            // System Configuration
-            dataCyclePeriod: config.FileBody.SysCfg.Payload[0].ulDataCyclePeriodNs,
-            
-            // Motor Configuration
-            motorPolePairs: config.FileBody.MotorCfg.Payload[0].bMotorPolePairs,
-            maxSpeed: config.FileBody.MotorCfg.Payload[0].usMaxSpeedRpm,
-            minSpeed: config.FileBody.MotorCfg.Payload[0].usMinSpeedRpm,
             
             // Application Configuration
             operationMode: config.FileBody.AppCfg.Payload.OpMode,
+            dataCyclePeriod: config.FileBody.SysCfg.Payload[0].ulDataCyclePeriodNs,
             rampUpRate: config.FileBody.AppCfg.Payload.RampUpRt,
             rampDownRate: config.FileBody.AppCfg.Payload.RampDwnRt,
             quickStopRate: config.FileBody.AppCfg.Payload.QuickStopRt,
